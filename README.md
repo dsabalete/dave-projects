@@ -8,13 +8,11 @@ Protegida con **Supabase Auth + RLS** (cada usuario solo ve sus datos).
 
 | Archivo | Descripción |
 |---|---|
-| `index.html` | Estructura, estilos y formulario de login |
+| `index.html` | Estructura y estilos |
 | `app.js` | Lógica: autenticación, conexión a Supabase, tablero, drag-and-drop, modales |
 | `supabase-schema.sql` | Script SQL: tablas, RLS restrictivo, índices |
-| `scripts/generate-config.js` | Genera `config.js` desde variables de entorno |
 | `netlify.toml` | Configuración de build para Netlify |
 | `package.json` | Scripts de build y dependencias |
-| `.env.example` | Plantilla de variables de entorno |
 
 ## 1. Configurar Supabase
 
@@ -28,23 +26,19 @@ Protegida con **Supabase Auth + RLS** (cada usuario solo ve sus datos).
 5. Crea el archivo `.env` en la raíz del proyecto:
 
 ```bash
-SUPABASE_URL="https://tu-proyecto.supabase.co"
-SUPABASE_ANON_KEY="tu-clave-anon"
+VITE_SUPABASE_URL="https://tu-proyecto.supabase.co"
+VITE_SUPABASE_ANON_KEY="tu-clave-anon"
 ```
 
-6. Genera la configuración del cliente:
-
-```bash
-node scripts/generate-config.js
-```
+ la sección "6. Genera la configuración del cliente:" completa, hasta el inicio de "## 2. Desarrollo local"
 
 ## 2. Desarrollo local
 
 ```bash
-npx serve .
+npm run dev
 ```
 
-Abre `http://localhost:3000`.
+Abre `http://localhost:5173`.
 
 ## 3. Despliegue
 
@@ -52,23 +46,18 @@ Abre `http://localhost:3000`.
 
 1. En [app.netlify.com](https://app.netlify.com), **Add new site → Import an existing project** y selecciona el repositorio.
 2. **Build command:** `npm run build`
-3. **Build output directory:** `.`
-4. En **Site configuration → Environment variables**, añade `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
+3. **Build output directory:** `dist`
+4. En **Site configuration → Environment variables**, añade `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
 
 ### Cloudflare Pages (desde GitHub)
 
 1. En [dash.cloudflare.com](https://dash.cloudflare.com) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
 2. Selecciona el repositorio.
 3. **Build command:** `npm run build`
-4. **Build output directory:** `.`
-5. En **Environment variables**, añade `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
+4. **Build output directory:** `dist`
+5. En **Environment variables**, añade `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
 
-### Netlify (desde la carpeta local)
-
-1. Ejecuta `node scripts/generate-config.js` con las variables de entorno definidas.
-2. En [app.netlify.com](https://app.netlify.com), ve a **Deploys** y arrastra la carpeta del proyecto.
-
-## Seguridad
+## 3. Despliegue
 
 Cada tabla tiene `user_id` y políticas RLS que garantizan que **solo el propietario puede leer y modificar sus datos**. Incluso si alguien obtiene la anon key, no puede acceder a datos de otros usuarios.
 

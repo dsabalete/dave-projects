@@ -2,7 +2,11 @@
 // Gestor de Proyectos — lógica de la app
 // ============================================================
 
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
 let currentUser = null;
 let projects = [];
@@ -69,8 +73,8 @@ async function initApp() {
 // ---------- Carga de datos ----------
 
 async function loadAll() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes("your-project")) {
-    showBanner("Configura tu .env y ejecuta node scripts/generate-config.js para generar la configuración de Supabase.", true);
+  if (!supabaseUrl || !supabaseKey || supabaseUrl.includes("your-project")) {
+    showBanner("Configura las variables de entorno VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY.", true);
     return;
   }
   const [{ data: projectData, error: projectError }, { data: taskData, error: taskError }] = await Promise.all([
