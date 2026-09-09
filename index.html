@@ -201,6 +201,7 @@
   .auth-gate h2{ font-size:17px; margin-bottom:8px; }
   .auth-gate p{ font-size:13px; color:var(--gray-500); margin-bottom:20px; }
   .auth-gate .btn{ margin:0 auto; }
+  #identity-container{ position:absolute; visibility:hidden; width:0; height:0; overflow:hidden; }
 </style>
 </head>
 <body>
@@ -321,10 +322,14 @@
 
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<div id="identity-container"></div>
 <script>
   (async function () {
     // --- Netlify Identity gate ---
-    const user = await NetlifyIdentityWidget.getUser();
+    const user = await new Promise((resolve) => {
+      NetlifyIdentityWidget.on("init", resolve);
+      NetlifyIdentityWidget.init({ container: "#identity-container" });
+    });
 
     if (!user) {
       document.getElementById("auth-gate").style.display = "block";
