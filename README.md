@@ -1,6 +1,6 @@
 # Mis Proyectos — Gestor de Proyectos Kanban
 
-App web para gestionar proyectos en un tablero Kanban (Por hacer / En progreso / Completado), con datos persistidos en Supabase. Desplegada como sitio estático en Netlify.
+App web para gestionar proyectos en un tablero Kanban (Por hacer / En progreso / Completado), con datos persistidos en Supabase. Desplegada como sitio estático en **Netlify** y **Cloudflare Pages**.
 
 Protegida con **Supabase Auth + RLS** (cada usuario solo ve sus datos).
 
@@ -11,8 +11,9 @@ Protegida con **Supabase Auth + RLS** (cada usuario solo ve sus datos).
 | `index.html` | Estructura, estilos y formulario de login |
 | `app.js` | Lógica: autenticación, conexión a Supabase, tablero, drag-and-drop, modales |
 | `supabase-schema.sql` | Script SQL: tablas, RLS restrictivo, índices |
-| `scripts/generate-config.js` | Genera `config.js` desde las variables de entorno |
-| `netlify.toml` | Configuración de build |
+| `scripts/generate-config.js` | Genera `config.js` desde variables de entorno |
+| `netlify.toml` | Configuración de build para Netlify |
+| `package.json` | Scripts de build y dependencias |
 | `.env.example` | Plantilla de variables de entorno |
 
 ## 1. Configurar Supabase
@@ -45,36 +46,36 @@ npx serve .
 
 Abre `http://localhost:3000`.
 
-## 3. Despliegue en Netlify
+## 3. Despliegue
 
-### Desde GitHub (recomendado)
+### Netlify (desde GitHub)
 
-1. Sube el código a un repositorio en GitHub.
-2. En [app.netlify.com](https://app.netlify.com), haz clic en **Add new site → Import an existing project** y selecciona el repositorio.
-3. En **Site configuration → Environment variables**, añade:
+1. En [app.netlify.com](https://app.netlify.com), **Add new site → Import an existing project** y selecciona el repositorio.
+2. **Build command:** `npm run build`
+3. **Build output directory:** `.`
+4. En **Site configuration → Environment variables**, añade `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
 
-| Variable | Valor |
-|---|---|
-| `SUPABASE_URL` | `https://tu-proyecto.supabase.co` |
-| `SUPABASE_ANON_KEY` | `tu-clave-anon-publica` |
+### Cloudflare Pages (desde GitHub)
 
-4. Netlify ejecutará automáticamente `node scripts/generate-config.js` antes de desplegar.
+1. En [dash.cloudflare.com](https://dash.cloudflare.com) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
+2. Selecciona el repositorio.
+3. **Build command:** `npm run build`
+4. **Build output directory:** `.`
+5. En **Environment variables**, añade `SUPABASE_URL` y `SUPABASE_ANON_KEY`.
 
-### Desde la carpeta local (sin Git)
+### Netlify (desde la carpeta local)
 
 1. Ejecuta `node scripts/generate-config.js` con las variables de entorno definidas.
 2. En [app.netlify.com](https://app.netlify.com), ve a **Deploys** y arrastra la carpeta del proyecto.
 
 ## Seguridad
 
-### Supabase Auth + RLS
-
 Cada tabla tiene `user_id` y políticas RLS que garantizan que **solo el propietario puede leer y modificar sus datos**. Incluso si alguien obtiene la anon key, no puede acceder a datos de otros usuarios.
 
 ## Flujo de login
 
 ```
-1. Visita tu-sitio.netlify.app
+1. Visita el sitio
          │
          ▼
 2. Formulario de login (email + contraseña)
