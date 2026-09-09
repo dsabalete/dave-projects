@@ -4,6 +4,7 @@
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+let currentUser = null;
 let projects = [];
 let tasks = [];
 let activeProjectId = "all";
@@ -18,6 +19,51 @@ function showBanner(msg, isError) {
 }
 function hideBanner() {
   statusBanner.style.display = "none";
+}
+
+// ---------- Autenticación ----------
+
+const loginGate = document.getElementById("login-gate");
+const appContent = document.getElementById("app-content");
+
+function showLogin() {
+  loginGate.style.display = "block";
+  appContent.style.display = "none";
+}
+
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("login-email").value.trim();
+  const password = document.getElementById("login-password").value;
+  const errorEl = document.getElementById("login-error");
+  errorEl.style.display = "none";
+
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if (error) {
+    errorEl.textContent = "Credenciales incorrectas.";
+    errorEl.style.display = "block";
+    return;
+  }
+  await initApp();
+});
+
+document.getElementById("logout-btn").addEventListener("click", async () => {
+  await supabaseClient.auth.signOut();
+  currentUser = null;
+  showLogin();
+});
+
+async function initApp() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) {
+    showLogin();
+    return;
+  }
+  currentUser = user;
+  loginGate.style.display = "none";
+  appContent.style.display = "block";
+  document.getElementById("user-email").textContent = user.email;
+  await loadAll();
 }
 
 // ---------- Carga de datos ----------
@@ -223,6 +269,7 @@ document.getElementById("task-save-btn").addEventListener("click", async () => {
     priority: document.getElementById("task-priority").value,
     due_date: document.getElementById("task-due").value || null,
     status: document.getElementById("task-status").value,
+    user_id: currentUser.id,
   };
   if (!payload.title) { showBanner("El título de la tarea es obligatorio.", true); return; }
 
@@ -247,7 +294,7 @@ document.getElementById("add-project-btn").addEventListener("click", async () =>
   const name = document.getElementById("new-project-name").value.trim();
   const color = document.getElementById("new-project-color").value;
   if (!name) return;
-  const { error } = await supabaseClient.from("projects").insert({ name, color });
+  const { error } = await supabaseClient.from("projects").insert({ name, color, user_id: currentUser.id });
   if (error) { showBanner("No se pudo crear el proyecto.", true); return; }
   document.getElementById("new-project-name").value = "";
   await loadAll();
@@ -283,4 +330,4 @@ function formatDate(dateStr) {
 
 // ---------- Inicio ----------
 
-loadAll();
+initApp();

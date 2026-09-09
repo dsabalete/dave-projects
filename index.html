@@ -195,6 +195,28 @@
   .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
   .new-project-row{ display:flex; gap:8px; }
   .new-project-row input{ flex:1; }
+  .user-info{ display:flex; align-items:center; gap:10px; font-size:13px; }
+  .user-info span{ color:var(--gray-500); }
+
+  /* Login */
+  .login-gate{
+    display:none;
+    text-align:center;
+    padding:80px 20px;
+    max-width:380px;
+    margin:0 auto;
+  }
+  .login-gate h2{ font-size:17px; margin-bottom:8px; }
+  .login-gate p{ font-size:13px; color:var(--gray-500); margin-bottom:20px; }
+  .login-form{ display:flex; flex-direction:column; gap:12px; }
+  .login-form input{
+    padding:9px 10px;
+    border-radius:8px;
+    border:1px solid var(--gray-300);
+    font-family:inherit;
+    font-size:13px;
+  }
+  .login-error{ color:var(--red); font-size:12px; display:none; }
 </style>
 </head>
 <body>
@@ -208,12 +230,27 @@
     <select id="project-filter"></select>
     <button class="btn btn-secondary" id="manage-projects-btn">Proyectos</button>
     <button class="btn btn-primary" id="new-task-btn">+ Nueva tarea</button>
+    <div class="user-info">
+      <span id="user-email"></span>
+      <button class="btn btn-secondary" id="logout-btn">Salir</button>
+    </div>
   </div>
 </header>
 
 <main>
-  <div id="status-banner"></div>
-  <div class="board">
+  <div id="login-gate" class="login-gate">
+    <h2>Iniciar sesión</h2>
+    <p>Introduce tus credenciales de Supabase para acceder al tablero.</p>
+    <form id="login-form" class="login-form">
+      <input type="email" id="login-email" placeholder="Email" required />
+      <input type="password" id="login-password" placeholder="Contraseña" required />
+      <button type="submit" class="btn btn-primary">Entrar</button>
+      <p id="login-error" class="login-error"></p>
+    </form>
+  </div>
+  <div id="app-content" style="display:none;">
+    <div id="status-banner"></div>
+    <div class="board">
     <section class="column" data-status="todo">
       <div class="column-header">
         <div class="column-title"><span class="dot" style="background:var(--gray-500)"></span>Por hacer</div>
@@ -240,6 +277,7 @@
       <div class="cards" id="cards-done"></div>
       <button class="add-task" data-status="done">+ Añadir tarea</button>
     </section>
+  </div>
   </div>
 </main>
 
