@@ -1,0 +1,3 @@
+name = "dave-projects"
+pages_build_output_dir = "."
+workers_dev = false

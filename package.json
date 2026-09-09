@@ -1,0 +1,12 @@
+{
+  "name": "dave-projects",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/generate-config.js",
+    "dev": "npx serve .",
+    "deploy": "npx wrangler pages deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3"
+  }
+}
