@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mis Proyectos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-app:#f6f7f9;
+    --white:#ffffff;
+    --dark:#1c212b;
+    --gray-500:#6b7280;
+    --gray-300:#d9dde3;
+    --gray-100:#eef0f3;
+    --blue:#3b6bfa;
+    --blue-light:#e6ecff;
+    --green:#17a36c;
+    --green-light:#dff5e9;
+    --amber:#d98c0f;
+    --amber-light:#fcf0d4;
+    --red:#dc3d3d;
+    --red-light:#fbe2e2;
+    --radius:10px;
+    --shadow:0 1px 3px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--bg-app);
+    color:var(--dark);
+  }
+  header{
+    background:var(--white);
+    border-bottom:1px solid var(--gray-300);
+    padding:20px 32px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  .brand h1{ font-size:20px; margin:0 0 2px; font-weight:700; }
+  .brand p{ margin:0; font-size:13px; color:var(--gray-500); }
+  .header-actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  select, .btn, input, textarea{
+    font-family:inherit;
+    font-size:13px;
+  }
+  select{
+    padding:8px 12px;
+    border-radius:8px;
+    border:1px solid var(--gray-300);
+    background:var(--white);
+    color:var(--dark);
+    font-weight:500;
+  }
+  .btn{
+    padding:9px 16px;
+    border-radius:8px;
+    border:none;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .btn-primary{ background:var(--blue); color:white; }
+  .btn-primary:hover{ background:#2f57d8; }
+  .btn-secondary{ background:var(--white); color:var(--dark); border:1px solid var(--gray-300); }
+  .btn-secondary:hover{ background:var(--gray-100); }
+  .btn-danger{ background:var(--red-light); color:var(--red); }
+
+  main{ padding:24px 32px 60px; }
+  #status-banner{
+    max-width:900px;
+    margin:0 auto 16px;
+    padding:12px 16px;
+    border-radius:8px;
+    background:var(--amber-light);
+    color:#8a5c07;
+    font-size:13px;
+    display:none;
+  }
+  .board{
+    display:flex;
+    gap:20px;
+    align-items:flex-start;
+    overflow-x:auto;
+    padding-bottom:10px;
+  }
+  .column{
+    background:var(--gray-100);
+    border-radius:12px;
+    width:300px;
+    min-width:300px;
+    padding:12px 12px 16px;
+  }
+  .column-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:4px;
+    margin-bottom:12px;
+  }
+  .column-title{ display:flex; align-items:center; gap:8px; font-weight:600; font-size:14px; }
+  .dot{ width:8px; height:8px; border-radius:50%; }
+  .count-badge{
+    background:var(--white);
+    color:var(--gray-500);
+    font-size:11px;
+    font-weight:600;
+    padding:3px 8px;
+    border-radius:100px;
+  }
+  .cards{ display:flex; flex-direction:column; gap:12px; min-height:20px; }
+  .card{
+    background:var(--white);
+    border:1px solid var(--gray-300);
+    border-radius:var(--radius);
+    padding:14px;
+    box-shadow:var(--shadow);
+    cursor:grab;
+  }
+  .card.dragging{ opacity:.4; }
+  .card-top{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:6px; }
+  .badge{
+    font-size:11px;
+    font-weight:600;
+    padding:3px 8px;
+    border-radius:100px;
+    white-space:nowrap;
+  }
+  .card-title{ font-size:14px; font-weight:600; margin:0 0 10px; line-height:1.35; }
+  .card-bottom{ display:flex; justify-content:space-between; align-items:center; }
+  .due{ font-size:11px; color:var(--gray-500); font-weight:500; }
+  .avatar{
+    width:24px; height:24px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:white; font-size:10px; font-weight:600;
+    background:var(--blue);
+  }
+  .card-delete{
+    border:none; background:none; color:var(--gray-500); cursor:pointer;
+    font-size:12px; padding:0; margin-left:4px;
+  }
+  .card-delete:hover{ color:var(--red); }
+  .add-task{
+    border:1px dashed var(--gray-300);
+    border-radius:8px;
+    padding:10px;
+    text-align:center;
+    color:var(--gray-500);
+    font-size:12px;
+    font-weight:500;
+    cursor:pointer;
+    background:none;
+    width:100%;
+    margin-top:4px;
+  }
+  .add-task:hover{ background:var(--white); }
+  .empty-hint{ font-size:12px; color:var(--gray-500); text-align:center; padding:20px 0; }
+
+  /* Modal */
+  .modal-overlay{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(20,22,28,.4);
+    align-items:center; justify-content:center;
+    z-index:100;
+    padding:20px;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal{
+    background:var(--white);
+    border-radius:12px;
+    padding:24px;
+    width:100%;
+    max-width:420px;
+  }
+  .modal h2{ margin:0 0 16px; font-size:17px; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12px; font-weight:600; color:var(--gray-500); margin-bottom:6px; }
+  .field input, .field select, .field textarea{
+    width:100%;
+    padding:9px 10px;
+    border-radius:8px;
+    border:1px solid var(--gray-300);
+    background:var(--white);
+    color:var(--dark);
+  }
+  .field textarea{ resize:vertical; min-height:50px; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
+  .new-project-row{ display:flex; gap:8px; }
+  .new-project-row input{ flex:1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>Mis Proyectos</h1>
+    <p id="project-subtitle">Todos los proyectos</p>
+  </div>
+  <div class="header-actions">
+    <select id="project-filter"></select>
+    <button class="btn btn-secondary" id="manage-projects-btn">Proyectos</button>
+    <button class="btn btn-primary" id="new-task-btn">+ Nueva tarea</button>
+  </div>
+</header>
+
+<main>
+  <div id="status-banner"></div>
+  <div class="board">
+    <section class="column" data-status="todo">
+      <div class="column-header">
+        <div class="column-title"><span class="dot" style="background:var(--gray-500)"></span>Por hacer</div>
+        <span class="count-badge" id="count-todo">0</span>
+      </div>
+      <div class="cards" id="cards-todo"></div>
+      <button class="add-task" data-status="todo">+ Añadir tarea</button>
+    </section>
+
+    <section class="column" data-status="in_progress">
+      <div class="column-header">
+        <div class="column-title"><span class="dot" style="background:var(--blue)"></span>En progreso</div>
+        <span class="count-badge" id="count-in_progress">0</span>
+      </div>
+      <div class="cards" id="cards-in_progress"></div>
+      <button class="add-task" data-status="in_progress">+ Añadir tarea</button>
+    </section>
+
+    <section class="column" data-status="done">
+      <div class="column-header">
+        <div class="column-title"><span class="dot" style="background:var(--green)"></span>Completado</div>
+        <span class="count-badge" id="count-done">0</span>
+      </div>
+      <div class="cards" id="cards-done"></div>
+      <button class="add-task" data-status="done">+ Añadir tarea</button>
+    </section>
+  </div>
+</main>
+
+<!-- Modal: nueva/editar tarea -->
+<div class="modal-overlay" id="task-modal">
+  <div class="modal">
+    <h2 id="task-modal-title">Nueva tarea</h2>
+    <input type="hidden" id="task-id" />
+    <div class="field">
+      <label>Título</label>
+      <input type="text" id="task-title" placeholder="Ej. Conectar la app con Supabase" />
+    </div>
+    <div class="field">
+      <label>Proyecto</label>
+      <select id="task-project"></select>
+    </div>
+    <div class="field">
+      <label>Prioridad</label>
+      <select id="task-priority">
+        <option value="baja">Baja</option>
+        <option value="media" selected>Media</option>
+        <option value="alta">Alta</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Fecha límite</label>
+      <input type="date" id="task-due" />
+    </div>
+    <div class="field">
+      <label>Estado</label>
+      <select id="task-status">
+        <option value="todo">Por hacer</option>
+        <option value="in_progress">En progreso</option>
+        <option value="done">Completado</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="task-cancel-btn">Cancelar</button>
+      <button class="btn btn-primary" id="task-save-btn">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: gestionar proyectos -->
+<div class="modal-overlay" id="project-modal">
+  <div class="modal">
+    <h2>Proyectos</h2>
+    <div id="project-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;"></div>
+    <div class="field">
+      <label>Nuevo proyecto</label>
+      <div class="new-project-row">
+        <input type="text" id="new-project-name" placeholder="Nombre del proyecto" />
+        <input type="color" id="new-project-color" value="#3b6bfa" style="width:44px; padding:2px; border-radius:8px; border:1px solid var(--gray-300);" />
+        <button class="btn btn-primary" id="add-project-btn">Añadir</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="project-close-btn">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
