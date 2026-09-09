@@ -4,7 +4,6 @@
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let currentUser = null;
 let projects = [];
 let tasks = [];
 let activeProjectId = "all";
@@ -21,61 +20,10 @@ function hideBanner() {
   statusBanner.style.display = "none";
 }
 
-// ---------- Autenticación Supabase ----------
-
-const authGate = document.getElementById("auth-gate");
-const appContent = document.getElementById("app-content");
-
-function showSupabaseLogin() {
-  authGate.innerHTML = `
-    <h2>Autenticación de datos</h2>
-    <p>Introduce tus credenciales de Supabase para acceder a tus datos.</p>
-    <form id="supabase-login-form" style="display:flex;flex-direction:column;gap:12px;max-width:300px;margin:0 auto;">
-      <input type="email" id="sb-email" placeholder="Email" required
-        style="padding:9px 10px;border-radius:8px;border:1px solid #d9dde3;font-family:inherit;font-size:13px;" />
-      <input type="password" id="sb-password" placeholder="Contraseña" required
-        style="padding:9px 10px;border-radius:8px;border:1px solid #d9dde3;font-family:inherit;font-size:13px;" />
-      <button type="submit" class="btn btn-primary">Entrar</button>
-      <p id="sb-login-error" style="color:#dc3d3d;font-size:12px;display:none;"></p>
-    </form>
-  `;
-  authGate.style.display = "block";
-  appContent.style.display = "none";
-
-  document.getElementById("supabase-login-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const email = document.getElementById("sb-email").value.trim();
-    const password = document.getElementById("sb-password").value;
-    const errorEl = document.getElementById("sb-login-error");
-    errorEl.style.display = "none";
-
-    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-    if (error) {
-      errorEl.textContent = "Credenciales incorrectas.";
-      errorEl.style.display = "block";
-      return;
-    }
-    await initApp();
-  });
-}
-
-async function initApp() {
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  if (!user) {
-    showSupabaseLogin();
-    return;
-  }
-  currentUser = user;
-  authGate.style.display = "none";
-  appContent.style.display = "block";
-  document.getElementById("user-email").textContent = user.email;
-  await loadAll();
-}
-
 // ---------- Carga de datos ----------
 
 async function loadAll() {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes("your-project") || SUPABASE_URL.includes("dave-projects")) {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes("your-project")) {
     showBanner("Configura tu .env y ejecuta node scripts/generate-config.js para generar la configuración de Supabase.", true);
     return;
   }
@@ -85,7 +33,7 @@ async function loadAll() {
   ]);
 
   if (projectError || taskError) {
-    showBanner("No se pudo conectar con Supabase. Revisa la configuración de autenticación.", true);
+    showBanner("No se pudo conectar con Supabase. Revisa la configuración.", true);
     console.error(projectError, taskError);
     return;
   }
@@ -275,7 +223,6 @@ document.getElementById("task-save-btn").addEventListener("click", async () => {
     priority: document.getElementById("task-priority").value,
     due_date: document.getElementById("task-due").value || null,
     status: document.getElementById("task-status").value,
-    user_id: currentUser.id,
   };
   if (!payload.title) { showBanner("El título de la tarea es obligatorio.", true); return; }
 
@@ -300,7 +247,7 @@ document.getElementById("add-project-btn").addEventListener("click", async () =>
   const name = document.getElementById("new-project-name").value.trim();
   const color = document.getElementById("new-project-color").value;
   if (!name) return;
-  const { error } = await supabaseClient.from("projects").insert({ name, color, user_id: currentUser.id });
+  const { error } = await supabaseClient.from("projects").insert({ name, color });
   if (error) { showBanner("No se pudo crear el proyecto.", true); return; }
   document.getElementById("new-project-name").value = "";
   await loadAll();
@@ -336,10 +283,4 @@ function formatDate(dateStr) {
 
 // ---------- Inicio ----------
 
-document.getElementById("logout-btn").addEventListener("click", async () => {
-  await supabaseClient.auth.signOut();
-  netlifyIdentity.logout();
-  window.location.href = "/login";
-});
-
-initApp();
+loadAll();

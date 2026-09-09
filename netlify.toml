@@ -1,28 +1,3 @@
 [build]
   command = "node scripts/generate-config.js"
   publish = "."
-
-# Redirect rules — Identity role-based access
-# Usuarios autenticados con rol "admin" acceden a /
-# El resto es redirigido a /login
-
-[[redirects]]
-  from = "/"
-  to = "/index.html"
-  status = 200
-  conditions = {Role = ["admin"]}
-
-[[redirects]]
-  from = "/*"
-  to = "/login"
-  status = 302
-  force = false
-
-# Security headers
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
