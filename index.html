@@ -328,7 +328,7 @@
     // --- Netlify Identity gate ---
     const user = await new Promise((resolve) => {
       netlifyIdentity.on("init", resolve);
-      netlifyIdentity.init({ container: "#identity-container" });
+      netlifyIdentity.init({ container: "#identity-container", APIUrl: "https://dave-projects.netlify.app/.netlify/identity" });
     });
 
     if (!user) {
