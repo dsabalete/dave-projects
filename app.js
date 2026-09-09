@@ -338,7 +338,7 @@ function formatDate(dateStr) {
 
 document.getElementById("logout-btn").addEventListener("click", async () => {
   await supabaseClient.auth.signOut();
-  NetlifyIdentityWidget.logout();
+  netlifyIdentity.logout();
   window.location.href = "/login";
 });
 

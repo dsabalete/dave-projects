@@ -327,8 +327,8 @@
   (async function () {
     // --- Netlify Identity gate ---
     const user = await new Promise((resolve) => {
-      NetlifyIdentityWidget.on("init", resolve);
-      NetlifyIdentityWidget.init({ container: "#identity-container" });
+      netlifyIdentity.on("init", resolve);
+      netlifyIdentity.init({ container: "#identity-container" });
     });
 
     if (!user) {
