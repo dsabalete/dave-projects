@@ -195,6 +195,12 @@
   .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
   .new-project-row{ display:flex; gap:8px; }
   .new-project-row input{ flex:1; }
+  .user-info{ display:flex; align-items:center; gap:10px; font-size:13px; }
+  .user-info span{ color:var(--gray-500); }
+  .auth-gate{ display:none; text-align:center; padding:80px 20px; max-width:400px; margin:0 auto; }
+  .auth-gate h2{ font-size:17px; margin-bottom:8px; }
+  .auth-gate p{ font-size:13px; color:var(--gray-500); margin-bottom:20px; }
+  .auth-gate .btn{ margin:0 auto; }
 </style>
 </head>
 <body>
@@ -208,12 +214,22 @@
     <select id="project-filter"></select>
     <button class="btn btn-secondary" id="manage-projects-btn">Proyectos</button>
     <button class="btn btn-primary" id="new-task-btn">+ Nueva tarea</button>
+    <div class="user-info">
+      <span id="user-email"></span>
+      <button class="btn btn-secondary" id="logout-btn">Salir</button>
+    </div>
   </div>
 </header>
 
 <main>
-  <div id="status-banner"></div>
-  <div class="board">
+  <div id="auth-gate" class="auth-gate">
+    <h2>Autenticación requerida</h2>
+    <p>Debes iniciar sesión para acceder al tablero de proyectos.</p>
+    <button class="btn btn-primary" onclick="window.location.href='/login'">Iniciar sesión</button>
+  </div>
+  <div id="app-content" style="display:none;">
+    <div id="status-banner"></div>
+    <div class="board">
     <section class="column" data-status="todo">
       <div class="column-header">
         <div class="column-title"><span class="dot" style="background:var(--gray-500)"></span>Por hacer</div>
@@ -240,6 +256,7 @@
       <div class="cards" id="cards-done"></div>
       <button class="add-task" data-status="done">+ Añadir tarea</button>
     </section>
+  </div>
   </div>
 </main>
 
@@ -302,8 +319,33 @@
   </div>
 </div>
 
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="config.js"></script>
-<script src="app.js"></script>
+<script>
+  (async function () {
+    // --- Netlify Identity gate ---
+    const user = await NetlifyIdentityWidget.getUser();
+
+    if (!user) {
+      document.getElementById("auth-gate").style.display = "block";
+      return;
+    }
+
+    // User is authenticated via Netlify Identity
+    document.getElementById("auth-gate").style.display = "none";
+    document.getElementById("app-content").style.display = "block";
+    document.getElementById("user-email").textContent = user.email;
+
+    // --- Load Supabase config and app ---
+    const configScript = document.createElement("script");
+    configScript.src = "config.js";
+    configScript.onload = () => {
+      const appScript = document.createElement("script");
+      appScript.src = "app.js";
+      document.body.appendChild(appScript);
+    };
+    document.body.appendChild(configScript);
+  })();
+</script>
 </body>
 </html>

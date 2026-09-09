@@ -2,15 +2,18 @@
 
 App web para gestionar proyectos en un tablero Kanban (Por hacer / En progreso / Completado), con datos persistidos en Supabase. Desplegada como sitio estático en Netlify.
 
+Protegida con **Netlify Identity** (acceso al sitio) y **Supabase Auth + RLS** (protección de datos).
+
 ## Archivos
 
 | Archivo | Descripción |
 |---|---|
 | `index.html` | Estructura y estilos de la app |
-| `app.js` | Lógica: conexión a Supabase, tablero, drag-and-drop, modales |
-| `supabase-schema.sql` | Script SQL para crear las tablas en Supabase |
+| `app.js` | Lógica: autenticación, conexión a Supabase, tablero, drag-and-drop, modales |
+| `login.html` | Página de login (Netlify Identity widget) |
+| `supabase-schema.sql` | Script SQL: tablas, RLS restrictivo, índices |
 | `scripts/generate-config.js` | Genera `config.js` desde las variables de entorno |
-| `netlify.toml` | Configuración de build y despliegue para Netlify |
+| `netlify.toml` | Configuración de build, redirects y headers de seguridad |
 | `.env.example` | Plantilla de variables de entorno |
 
 ## 1. Configurar Supabase
@@ -18,20 +21,31 @@ App web para gestionar proyectos en un tablero Kanban (Por hacer / En progreso /
 1. Crea una cuenta en [supabase.com](https://supabase.com) y un nuevo proyecto (plan gratuito).
 2. En **SQL Editor → New query**, pega el contenido de `supabase-schema.sql` y pulsa **Run**.
 3. Ve a **Project Settings → API** y copia el **Project URL** y la **anon public key**.
-4. Crea el archivo `.env` en la raíz del proyecto:
+4. **Crea tu usuario de Supabase Auth:**
+   - Ve a **Authentication → Users → Add user**
+   - Introduce tu email y contraseña
+   - **Deshabilita el registro público:** Authentication → Providers → Email → desmarca "Enable Sign ups"
+5. Crea el archivo `.env` en la raíz del proyecto:
 
 ```bash
 SUPABASE_URL="https://tu-proyecto.supabase.co"
 SUPABASE_ANON_KEY="tu-clave-anon"
 ```
 
-5. Genera la configuración del cliente:
+6. Genera la configuración del cliente:
 
 ```bash
 node scripts/generate-config.js
 ```
 
-Esto crea `config.js` con las credenciales para el navegador. Este archivo está en `.gitignore` y no se sube al repositorio.
+Si ya tenías datos sin `user_id`, migra los existentes ejecutando en el SQL Editor:
+
+```sql
+UPDATE projects SET user_id = 'TU-UUID-AQUI' WHERE user_id IS NULL;
+UPDATE tasks SET user_id = 'TU-UUID-AQUI' WHERE user_id IS NULL;
+```
+
+Obtén tu UUID en **Authentication → Users → tu usuario → User ID**.
 
 ## 2. Desarrollo local
 
@@ -39,7 +53,12 @@ Esto crea `config.js` con las credenciales para el navegador. Este archivo está
 npx serve .
 ```
 
-Abre `http://localhost:3000` en el navegador. No se necesita instalar dependencias.
+Abre `http://localhost:3000`. El flujo de login es:
+
+1. Netlify Identity redirige a `/login`
+2. Login con credenciales de Netlify Identity
+3. Se carga la app, que pide credenciales de Supabase Auth
+4. El tablero muestra los datos filtrados por tu usuario
 
 ## 3. Despliegue en Netlify
 
@@ -54,8 +73,15 @@ Abre `http://localhost:3000` en el navegador. No se necesita instalar dependenci
 | `SUPABASE_URL` | `https://tu-proyecto.supabase.co` |
 | `SUPABASE_ANON_KEY` | `tu-clave-anon-publica` |
 
-4. Netlify ejecutará automáticamente `node scripts/generate-config.js` antes de desplegar (configurado en `netlify.toml`).
-5. La app quedará disponible en una URL tipo `tu-sitio.netlify.app`.
+4. Netlify ejecutará automáticamente `node scripts/generate-config.js` antes de desplegar.
+
+### Configurar Netlify Identity
+
+1. En el dashboard de Netlify, ve a **Site configuration → Identity → Enable Identity**.
+2. En **Registration**, selecciona **Invite only** (solo usuarios invitados pueden acceder).
+3. Ve a **Identity → Users → Invite users** e invita tu email.
+4. Acepta la invitación desde el email que recibas.
+5. En **Site configuration → Identity → Roles**, asigna el rol **admin** a tu usuario.
 
 ### Desde la carpeta local (sin Git)
 
@@ -64,28 +90,58 @@ Abre `http://localhost:3000` en el navegador. No se necesita instalar dependenci
 
 ## Seguridad
 
-La app **no tiene sistema de login**. Las políticas de Row-Level Security (RLS) en Supabase están configuradas para permitir acceso completo a cualquier usuario anónimo.
+La protección funciona en dos capas:
 
-**Esto significa que cualquiera con tu URL de Supabase y la anon key puede leer, modificar y borrar tus datos.**
+### Capa 1: Netlify Identity (puerta de entrada)
 
-Para mitigarlo:
+Las redirect rules en `netlify.toml` obligan a autenticarse con Netlify Identity antes de acceder a cualquier página. Usuarios sin el rol `admin` son redirigidos a `/login`.
 
-- **No compartas la URL de la app pública** demasiado ampliamente.
-- Si en el futuro necesitas restringir el acceso, integra [Supabase Auth](https://supabase.com/docs/guides/auth) y actualiza las políticas RLS para exigir `auth.uid()`.
+### Capa 2: Supabase Auth + RLS (protección de datos)
 
-La anon key se expone en el navegador por diseño (es una clave pública). Lo crítico es que las políticas RLS no filtran quién puede operar sobre los datos.
+Cada tabla tiene `user_id` y políticas RLS que garantizan que **solo el propietario puede leer y modificar sus datos**. Incluso si alguien obtiene la anon key, no puede acceder a datos de otros usuarios.
 
-## Estructura del tablero
+### Headers de seguridad
+
+`netlify.toml` incluye:
+- `X-Frame-Options: DENY` — previene clickjacking
+- `X-Content-Type-Options: nosniff` — previene MIME sniffing
+- `Referrer-Policy: strict-origin-when-cross-origin` — controla el referrer
+
+## Flujo de login
+
+```
+1. Visita tu-sitio.netlify.app
+         │
+         ▼
+2. Netlify Identity redirige → /login
+         │
+         ▼
+3. Login con Netlify Identity (email + password)
+         │
+         ▼
+4. Redirige a / → index.html carga
+         │
+         ▼
+5. App detecta que no hay sesión Supabase → formulario de login
+         │
+         ▼
+6. Login con Supabase Auth (mismo email + password)
+         │
+         ▼
+7. Tablero con datos filtrados por tu usuario
+```
+
+## Uso del tablero
 
 - **+ Nueva tarea**: crea una tarea con proyecto, prioridad, fecha límite y columna.
 - Arrastra tarjetas entre columnas para cambiar el estado.
 - **Proyectos**: crea o elimina proyectos (etiquetas de color).
 - El selector superior filtra el tablero por proyecto.
 - Haz clic en una tarjeta para editarla; usa la ✕ para eliminarla.
+- **Salir**: cierra la sesión de Supabase Auth.
 
 ## Mejoras pendientes
 
-- Autenticación (Supabase Auth) para restringir el acceso.
 - Subtareas o comentarios por tarea.
 - Vista de línea de tiempo o calendario.
 - Soporte para dispositivos táctiles (drag-and-drop).
